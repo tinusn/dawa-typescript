@@ -1,3 +1,6 @@
+/**
+ * http://dawa.aws.dk/
+ */
 declare namespace DAWA {
 	interface Link {
 		/**
@@ -5,6 +8,7 @@ declare namespace DAWA {
 		 */
 		href: string;
 	}
+
 	interface GeneralAddress extends Link {
 		/**
 		 * Universel, unik identifikation af adressen af datatypen UUID. Er stabil over hele adressens levetid (ligesom et CPR-nummer) dvs. uanset om adressen evt. ændrer vejnavn, husnummer, postnummer eller kommunekode. Repræsenteret som 32 hexadecimale tegn. Eksempel: ”0a3f507a-93e7-32b8-e044-0003ba298018”.
@@ -25,6 +29,7 @@ declare namespace DAWA {
 		 */
 		historik: Historik;
 	}
+	
 	/**
 	 * En adresse er en struktureret betegnelse som angiver en særskilt adgang til et areal, en bygning eller en del af en bygning efter reglerne i adressebekendtgørelsen.
 	 * 
@@ -56,6 +61,9 @@ declare namespace DAWA {
 		adgangsadresse: AdgangsAdresse;
 	}
 
+	/**
+	 * http://dawa.aws.dk/adgangsadressedok#adressedata
+	 */
 	interface AdgangsAdresse extends GeneralAddress {
 		/**
 		 * Vejstykket som adressen er knyttet til.
@@ -75,12 +83,12 @@ declare namespace DAWA {
 		/**
 		 * Postnummeret som adressen er beliggende i.
 		 */
-		postnummer?: Postnummer;
+		postnummer?: NummerNavn;
 		
 		/**
 		 * Evt. stormodtagerpostnummer (firmapostnummer) som er tilknyttet adressen.
 		 */
-		stormodtagerpostnummer?: Postnummer;
+		stormodtagerpostnummer?: NummerNavn;
 		
 		/**
 		 * Kommunen som adressen er beliggende i.
@@ -113,6 +121,94 @@ declare namespace DAWA {
 		 * Geografisk punkt, som angiver særskilt adgang fra navngiven vej ind på et areal eller bygning.
 		 */
 		adgangspunkt: Adgangspunkt;
+	}
+	
+	/**
+	 * http://dawa.aws.dk/vejedok#vejnavnedata
+	 */
+	interface Vejnavn {
+		/**
+		 * Vejnavnet
+		 */
+		navn: string;
+		/**
+		 * De postnumre, hvori der ligger en vej med dette navn.
+		 */
+		postnumre: NummerNavn[];
+		/**
+		 * Kommunen hvori der ligger en vej med dette navn.
+		 * 
+		 * TODO: Feltet er ikke beskrevet i dokumentationen?
+		 */
+		kommune: KodeNavn;
+		
+		/**
+		 * De kommuner hvori der ligger en vej med dette navn.
+		 * 
+		 * kode = Kommunekoden. 4 cifre.
+		 * 
+		 * TODO: Servicen returner ikke dette felt? Den returnerer "kommune" i stedet for?
+		 */
+		kommuner: KodeNavn[];
+	}
+	
+	/**
+	 * http://dawa.aws.dk/vejedok#vejstykkedata
+	 */
+	interface Vejstykke extends Link {
+		/**
+		 * Identifikation af vejstykket. Er unikt indenfor den pågældende kommune. Repræsenteret ved fire cifre. Eksempel: I Københavns kommune er ”0004” lig ”Abel Cathrines Gade”.
+		 */
+		kode: string;
+		
+		/**
+		 * Vejens navn.
+		 */
+		navn?: string;
+		
+		/**
+		 * En evt. forkortet udgave af vejnavnet på højst 20 tegn, som bruges ved adressering på labels og rudekuverter og lign., hvor der ikke plads til det fulde vejnavn.
+		 */
+		adresseringsnavn: string;
+	}
+	
+	/**
+	 * http://dawa.aws.dk/supplerendebynavndok#supplerendebynavndata
+	 */
+	interface SupplerendeBy extends Link {
+		/**
+		 * Det supplerende bynavn. Indtil 34 tegn. Eksempel: ”Sønderholm”.
+		 */
+		navn: string;
+		
+		/**
+		 * Kommuner, som det supplerende bynavn er beliggende i.
+		 * 
+		 * kode = Kommunekoden. 4 cifre.
+		 */
+		kommuner: KodeNavn[];
+		
+		/**
+		 * Postnumre, som det supplerende bynavn er beliggende i.
+		 */
+		postnumre: NummerNavn[];
+	}
+	
+	/**
+	 * http://dawa.aws.dk/postnummerdok#postnummerdata
+	 */
+	interface Postnumre extends NummerNavn {
+		/**
+		 * Hvis postnummeret er et stormodtagerpostnummer rummer feltet adresserne på stormodtageren.
+		 */
+		stormodtageradresser?: LinkId[];
+		
+		/**
+		 * De kommuner hvis areal overlapper postnumeret areal.
+		 * 
+		 * kode = Kommunekoden. 4 cifre.
+		 */
+		kommuner: KodeNavn[];
 	}
 
 	interface Adgangspunkt {
@@ -182,7 +278,7 @@ declare namespace DAWA {
 		/**
 		 * Opstillingskresen som adressen er beliggende i. Beregnes udfra adgangspunktet og opstillingskredsinddelingerne fra DAGI
 		 */
-		opstillingskreds? KodeNavn;
+		opstillingskreds?: KodeNavn;
 		
 		/**
 		 * Hvilken zone adressen ligger i. "Byzone", "Sommerhusområde" eller "Landzone". Beregnes udfra adgangspunktet og zoneinddelingerne fra PlansystemDK
@@ -244,28 +340,8 @@ declare namespace DAWA {
 		 */
 		ændret?: Date;
 	}
-	
-	/**
-	 * Vejstykket som adressen er knyttet til.
-	 */
-	interface Vejstykke extends Link {
-		/**
-		 * Identifikation af vejstykket. Er unikt indenfor den pågældende kommune. Repræsenteret ved fire cifre. Eksempel: I Københavns kommune er ”0004” lig ”Abel Cathrines Gade”.
-		 */
-		kode: string;
-		
-		/**
-		 * Vejens navn.
-		 */
-		navn?: string;
-		
-		/**
-		 * En evt. forkortet udgave af vejnavnet på højst 20 tegn, som bruges ved adressering på labels og rudekuverter og lign., hvor der ikke plads til det fulde vejnavn.
-		 */
-		adresseringsnavn: string;
-	}
 
-	interface Postnummer extends Link {
+	interface NummerNavn extends Link {
 		/**
 		 * Postnummer
 		 */
@@ -281,6 +357,14 @@ declare namespace DAWA {
 		kode: string;
 		navn?: string;
 	}
+
+	interface LinkId extends Link {
+		id: string;
+	}
+
+	interface LinkKode extends Link {
+		kode: string;
+	}
 	
 	/**
 	 * Deprecated
@@ -294,5 +378,164 @@ declare namespace DAWA {
 		 * Det matrikulære ”ejerlav”s navn. Eksempel: ”Eskebjerg By, Bregninge”.
 		 */
 		navn: string;
+	}
+
+	namespace Lister {
+		interface GeneralData extends Link {
+			/**
+			 * Tidspunkt for seneste ændring registreret i DAWA. Opdateres ikke hvis ændringen kun vedrører geometrien (se felterne geo_ændret og geo_version).
+			 */
+			ændret: Date;
+			/**
+			 * Tidspunkt for seneste ændring af geometrien registreret i DAWA.
+			 */
+			geo_ændret: string;
+			/**
+			 * Versionsangivelse for geometrien. Inkrementeres hver gang geometrien ændrer sig i DAWA.
+			 */
+			geo_version: string;
+			navn?: string;
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#regiondata
+		 */
+		interface Regioner extends GeneralData {
+			/**
+			 * Regionskode. 4 cifre.
+			 */
+			kode: string;
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#kommunedata
+		 */
+		interface Kommuner extends GeneralData {
+			/**
+			 * Kommunekode. 4 cifre.
+			 */
+			kode: string;
+			/**
+			 * Regionskode for den region kommunen er beliggende i. 4 cifre.
+			 */
+			regionskode?: string;
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#sogndata
+		 */
+		interface Sogne extends GeneralData {
+			/**
+			 * Sognekode. 4 Cifre.
+			 */
+			kode: string;
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#retskredsdata
+		 */
+		interface Retskredse extends GeneralData {
+			/**
+			 * Retskredskode. 4 cifre.
+			 */
+			kode: string;
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#politikredsdata
+		 */
+		interface Politikredse extends GeneralData {
+			/**
+			 * Politikredskode. 4 cifre.
+			 */
+			kode: string;
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#opstillingskredsdata
+		 */
+		interface Opstillingskredse extends GeneralData {
+			/**
+			 * Opstillingskredskode. 4 cifre.
+			 */
+			kode: string;
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#valglandsdeldata
+		 */
+		interface Valglandsdele extends GeneralData {
+			/**
+			 * Valgslandsdelens bogstav, udgør nøglen.
+			 */
+			bogstav: string;
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#storkredsdata
+		 */
+		interface Storkredse extends GeneralData {
+			/**
+			 * Storkredsens nummer. Heltal. Udgør nøglen.
+			 */
+			nummer: string;
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#ejerlavdata
+		 */
+		interface Ejerlav extends KodeNavn {
+
+		}
+		
+		/**
+		 * http://dawa.aws.dk/listerdok#jordstykkedata
+		 */
+		interface Jordstykker extends Link {
+			/**
+			 * Tidspunkt for seneste ændring registreret i DAWA. Opdateres ikke hvis ændringen kun vedrører geometrien (se felterne geo_ændret og geo_version).
+			 */
+			ændret: Date;
+			/**
+			 * Tidspunkt for seneste ændring af geometrien registreret i DAWA.
+			 */
+			geo_ændret: string;
+			/**
+			 * Versionsangivelse for geometrien. Inkrementeres hver gang geometrien ændrer sig i DAWA.
+			 */
+			geo_version: string;
+			/**
+			 * Matrikelnummeret for jordstykket. Udgør sammen med ejerlavkoden en unik nøgle for jordstykket.
+			 */
+			matrikelnr: string;
+			/**
+			 * Identifikation af den vurderingsejendom jf. Ejendomsstamregisteret, ESR, som jordstykket er en del af. Repræsenteret ved op til syv cifre. Eksempel ”13606”.
+			 */
+			esrejendomsnr: string;
+			/**
+			 * SFE ejendomsnummer.
+			 */
+			sfeejendomsnr: string;
+			/**
+			 * Ejerlavet som jordstykket tilhører.
+			 */
+			ejerlav: KodeNavn;
+			/**
+			 * Kommunen som jordstykket er beliggende i.
+			 */
+			kommune?: LinkKode;
+			/**
+			 * Regionen som jordstykket er beliggende i.
+			 */
+			region?: LinkKode;
+			/**
+			 * Sognet som jordstykket er beliggende i.
+			 */
+			sogn?: LinkKode;
+			/**
+			 * Retskredsen som jordstykket er beliggende i.
+			 */
+			retskreds?: LinkKode;
+		}
 	}
 }
